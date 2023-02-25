@@ -1,0 +1,91 @@
+#+TITLE: Zero Effort Hosting Daemon (Backend)
+#+AUTHOR: APoniatowski
+#+EMAIL: adaml.poniatowski@gmail.com
+
+** Overview
+
+This is a GoLang backend application that provides APIs for data collection from the frontend and database management.
+
+** Features
+
+- Check if the database exists
+- Insert collected data into the database
+- Check if a user is banned
+
+** Dependencies
+
+This application requires the following dependencies:
+
+- GoLang v1.16 or later
+- PostgreSQL database
+
+** Setup
+
+1. Install GoLang v1.16 or later and PostgreSQL database (locally or remotely).
+2. Clone the repository and navigate to the project directory.
+3. Run the following command to install dependencies:
+#+BEGIN_SRC bash
+go get ./...
+#+END_SRC
+
+4. Create a .env file with the following environment variables:
+#+BEGIN_SRC bash
+DB_NAME=<database name>
+DB_USER=<database username>
+DB_PASSWORD=<database password>
+DB_HOST=<database host>
+DB_PORT=<database port>
+#+END_SRC
+
+5. Run the application using the following command:
+#+BEGIN_SRC bash
+cd ./cmd/backend-microservice/
+GO11MODULE=off GOOS=linux go build -race -ldflags "-extldflags '-static'" -o ./zehd-backend
+sudo chmod +x ./zehd-backend
+./zehd-backend
+#+END_SRC
+
+** APIs
+*** Check if the database exists
+API endpoint: `/database/exist`
+
+Method: `GET`
+
+**** Response:
+
+- `200 OK` if the database exists
+- `500 Internal Server Error` if the database does not exist
+
+*** Insert collected data into the database
+API endpoint: `/api/collect`
+
+Method: `POST`
+
+Request body: Please refer to the frontend for the body
+
+**** Response:
+
+- `200 OK` if data is inserted successfully
+- `400 Bad Request` if the request is malformed
+
+
+*** Check if a user is banned (WIP)
+API endpoint: `/api/banned`
+
+Method: `GET`
+
+Query parameter: This is still a Work In Progress
+
+**** Response:
+
+- `200 OK` with the banned user's information if the user is banned
+- `404 Not Found` if the user is not banned
+
+** Contributing
+Contributions to this project are welcome. To contribute, please follow these steps:
+
+1. Fork this repository.
+2. Create a new branch.
+3. Make your changes and commit them with descriptive commit messages.
+4. Push your changes to your forked repository.
+5. Create a pull request to the original repository.

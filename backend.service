@@ -1,0 +1,13 @@
+[Unit]
+Description=Backend Database API
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/usr/bin/backend
+User=backend
+
+[Install]
+WantedBy=multi-user.target
