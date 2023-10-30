@@ -2,7 +2,7 @@ package logging_test
 
 import (
 	"os"
-	"poniatowski-dev-backend/internal/logging"
+	"zehd-backend/internal/logging"
 	"strings"
 	"testing"
 )

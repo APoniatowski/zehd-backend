@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"zehd-backend/internal/env"
+	"strconv"
 	"time"
 )
 
@@ -39,4 +41,18 @@ func Logger(logFunction, logOutput, message string) error {
 	}
 	fmt.Println(logFunction + " [ " + logOutput + " ] ==> " + message)
 	return nil
+}
+
+// TrackTime defer this function right at the beginning, to track time from start to finish
+func TrackTime(taskName string, pre time.Time) time.Duration {
+	elapsed := time.Since(pre)
+	profiler, err := strconv.ParseBool(env.EnvProfiler())
+	if err != nil {
+		fmt.Println(err)
+	}
+	if profiler {
+		fmt.Printf("%v ", taskName)
+		fmt.Println("elapsed:", elapsed)
+	}
+	return elapsed
 }

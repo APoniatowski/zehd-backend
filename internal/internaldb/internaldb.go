@@ -4,86 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"poniatowski-dev-backend/internal/logging"
+	"zehd-backend/internal/logging"
 	"strconv"
+
+	. "zehd-backend/internal"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/mitchellh/go-ps"
 
 	"github.com/joho/godotenv"
 )
-
-// environment variable and table name constants
-const (
-	collectTable = "collect_table"
-	checkedTable = "checked_table"
-	bannedTable  = "banned_table"
-	dbHost       = "DBHOST"
-	dbPort       = "DBPORT"
-	dbUser       = "DBUSER"
-	dbPass       = "DBPASS"
-	dbName       = "DBNAME"
-)
-
-// table columns constants
-const (
-	collectedTableColumns = `unique_id SERIAL NOT NULL,
-frontend TEXT,
-backend TEXT,
-ip TEXT,
-port INT,
-path TEXT,
-method TEXT,
-xforwardfor TEXT,
-xrealip TEXT,
-useragent TEXT,
-via TEXT,
-age TEXT,
-timedate BIGINT,
-checked BOOL,
-banned BOOL,
-cfipcountry TEXT,
-PRIMARY KEY (unique_id)`
-	checkedTableColumns = `unique_id SERIAL NOT NULL,
-ip TEXT,
-domainname TEXT,
-timechecked BIGINT,
-PRIMARY KEY (unique_id)`
-	bannedTableColumns = `unique_id SERIAL NOT NULL,
-ip TEXT,
-domainname TEXT,
-timechecked BIGINT,
-timebanned BIGINT,
-PRIMARY KEY (unique_id)`
-	failedStatus = "failed"
-)
-
-type CollectionData struct {
-	FrontendName string `json:"frontendName"`
-	TimeDate     int64  `json:"timeDate"`
-	IP           string `json:"ip"`
-	Port         int    `json:"port"`
-	Path         string `json:"path"`
-	Method       string `json:"method"`
-	XForwardFor  string `json:"XForwardFor"`
-	XRealIP      string `json:"XRealIP"`
-	UserAgent    string `json:"useragent"`
-	Via          string `json:"via"`
-	Age          string `json:"age"`
-	CFIPCountry  string `json:"CF-IPCountry"`
-}
-
-type BannedData struct {
-	FrontendName    string `json:"frontendName"`
-	TimeDateBanned  int64  `json:"timeDateBanned"`
-	TimeDateChecked int64  `json:"timeDateChecked"`
-	IP              string `json:"ip"`
-	DomainName      string `json:"domainName"`
-	Banned          bool   `json:"banned"`
-}
-
-var db *sql.DB
-var Backend string
 
 // dbConfig this function is run within the initDB function, in order to connect, check, or create DB and table
 func dbConfig() (map[string]string, error) {
@@ -94,44 +24,44 @@ func dbConfig() (map[string]string, error) {
 	conf := make(map[string]string)
 	var emptyVar error
 	partialErrMessage := "environment variable required but not set, check logs for more details"
-	host, ok := os.LookupEnv(dbHost)
+	host, ok := os.LookupEnv(DbHost)
 	if !ok {
-		conf[dbHost] = "localhost"
+		conf[DbHost] = "localhost"
 		emptyVar = fmt.Errorf("dbhost " + partialErrMessage)
 		logging.LogIt("dbConfig", "ERROR", "DBHOST environment variable empty or non-existent. Defaulting to 'localhost'")
 	}
-	port, ok := os.LookupEnv(dbPort)
+	port, ok := os.LookupEnv(DbPort)
 	if !ok {
-		conf[dbPort] = ""
+		conf[DbPort] = ""
 		emptyVar = fmt.Errorf("dbport " + partialErrMessage)
 		logging.LogIt("dbConfig", "ERROR", "Unable to configure DB, DBPORT empty.")
 	}
-	user, ok := os.LookupEnv(dbUser)
+	user, ok := os.LookupEnv(DbUser)
 	if !ok {
-		conf[dbUser] = ""
+		conf[DbUser] = ""
 		emptyVar = fmt.Errorf("dbuser " + partialErrMessage)
 		logging.LogIt("dbConfig", "ERROR", "Unable to configure DB, DBUSER empty.")
 	}
-	password, ok := os.LookupEnv(dbPass)
+	password, ok := os.LookupEnv(DbPass)
 	if !ok {
-		conf[dbPass] = ""
+		conf[DbPass] = ""
 		emptyVar = fmt.Errorf("dbpass " + partialErrMessage)
 		logging.LogIt("dbConfig", "ERROR", "Unable to configure DB, DBPASS empty.")
 	}
-	name, ok := os.LookupEnv(dbName)
+	name, ok := os.LookupEnv(DbName)
 	if !ok {
-		conf[dbName] = ""
+		conf[DbName] = ""
 		emptyVar = fmt.Errorf("dbname " + partialErrMessage)
 		logging.LogIt("dbConfig", "ERROR", "Unable to configure DB, DBNAME empty.")
 	}
 	if emptyVar != nil {
 		return conf, emptyVar
 	}
-	conf[dbHost] = host
-	conf[dbPort] = port
-	conf[dbUser] = user
-	conf[dbPass] = password
-	conf[dbName] = name
+	conf[DbHost] = host
+	conf[DbPort] = port
+	conf[DbUser] = user
+	conf[DbPass] = password
+	conf[DbName] = name
 	return conf, nil
 }
 
@@ -140,7 +70,7 @@ func InitDB() (string, error) {
 	Backend, hostnameErr = os.Hostname()
 	if hostnameErr != nil {
 		logging.LogIt("InitDb", "ERROR", "unable to configure database, unable to get hostname")
-		return failedStatus, hostnameErr
+		return FailedStatus, hostnameErr
 	}
 	config, errConfig := dbConfig()
 	if errConfig != nil {
@@ -149,10 +79,10 @@ func InitDB() (string, error) {
 	}
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s database=%s sslmode=disable",
-		config[dbHost], config[dbPort],
-		config[dbUser], config[dbPass], config[dbName])
+		config[DbHost], config[DbPort],
+		config[DbUser], config[DbPass], config[DbName])
 	fmt.Printf("\nConnecting to DB server: ")
-	db, err = sql.Open("pgx", psqlInfo)
+	Db, err = sql.Open("pgx", psqlInfo)
 	if err != nil {
 		logging.LogIt("InitDb", "ERROR", "unable to open a connection to database server.")
 		fmt.Println("Connection failed!")
@@ -161,33 +91,33 @@ func InitDB() (string, error) {
 	}
 	fmt.Println("Connected successfully!")
 	fmt.Printf("Pinging DB server: ")
-	err = db.Ping()
+	err = Db.Ping()
 	if err != nil {
 		logging.LogIt("InitDB", "ERROR", "unable to ping database.")
 		fmt.Println("Ping failed!")
-		return failedStatus, err
+		return FailedStatus, err
 	}
 	fmt.Println("Pinged successfully!")
 	fmt.Printf("Checking if database and table exists: ")
-	var query = "SELECT * FROM " + collectTable + ";"
-	_, tableCheck := db.Query(query)
+	query := "SELECT * FROM " + CollectTable + ";"
+	_, tableCheck := Db.Query(query)
 	if tableCheck != nil {
 		fmt.Println("Not found")
 		fmt.Printf("Creating new table: ")
-		_, err = db.Exec("CREATE TABLE " + collectTable + "(" + collectedTableColumns + ");")
+		_, err = Db.Exec("CREATE TABLE " + CollectTable + "(" + CollectedTableColumns + ");")
 		if err != nil {
-			logging.LogIt("InitDb", "ERROR", "unable to create table ("+collectTable+").")
-			return failedStatus, err
+			logging.LogIt("InitDb", "ERROR", "unable to create table ("+CollectTable+").")
+			return FailedStatus, err
 		}
-		_, err = db.Exec("CREATE TABLE " + checkedTable + "(" + checkedTableColumns + ");")
+		_, err = Db.Exec("CREATE TABLE " + CheckedTable + "(" + CheckedTableColumns + ");")
 		if err != nil {
-			logging.LogIt("InitDb", "ERROR", "unable to create table ("+checkedTable+").")
-			return failedStatus, err
+			logging.LogIt("InitDb", "ERROR", "unable to create table ("+CheckedTable+").")
+			return FailedStatus, err
 		}
-		_, err = db.Exec("CREATE TABLE " + bannedTable + "(" + bannedTableColumns + ");")
+		_, err = Db.Exec("CREATE TABLE " + BannedTable + "(" + BannedTableColumns + ");")
 		if err != nil {
-			logging.LogIt("InitDb", "ERROR", "unable to create table ("+bannedTable+").")
-			return failedStatus, err
+			logging.LogIt("InitDb", "ERROR", "unable to create table ("+BannedTable+").")
+			return FailedStatus, err
 		}
 		fmt.Println("Created")
 	} else {
@@ -197,7 +127,7 @@ func InitDB() (string, error) {
 }
 
 func CheckDB() (processNotFound string) {
-	if dbHost == "localhost" {
+	if DbHost == "localhost" {
 		processList, err := ps.Processes()
 		if err != nil {
 			logging.LogIt("existHandler", "ERROR", "unable to list processes, in order to find postgres.")
@@ -207,7 +137,7 @@ func CheckDB() (processNotFound string) {
 			if process.Executable() == "postgres" {
 				logging.LogIt("existHandler", "INFO", "postgres was found. (pid: "+strconv.Itoa(process.Pid())+")")
 			} else {
-				processNotFound = failedStatus
+				processNotFound = FailedStatus
 				logging.LogIt("existHandler", "INFO", "postgres not found. please make sure it is installed")
 			}
 		}
@@ -218,11 +148,11 @@ func CheckDB() (processNotFound string) {
 		}
 		psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s database=%s sslmode=disable",
-			config[dbHost], config[dbPort],
-			config[dbUser], config[dbPass], config[dbName])
+			config[DbHost], config[DbPort],
+			config[DbUser], config[DbPass], config[DbName])
 		db, err := sql.Open("pgx", psqlInfo)
 		if err != nil {
-			processNotFound = failedStatus
+			processNotFound = FailedStatus
 			logging.LogIt("existHandler", "ERROR", "unable to open a connection to database server.")
 		}
 		defer func() {
@@ -231,9 +161,9 @@ func CheckDB() (processNotFound string) {
 				logging.LogIt("main", "ERROR", "unable to close database")
 			}
 		}()
-		_, dbCheck := db.Query("SELECT * FROM " + collectTable + ";")
+		_, dbCheck := db.Query("SELECT * FROM " + CollectTable + ";")
 		if dbCheck != nil {
-			processNotFound = "failed to query " + collectTable
+			processNotFound = "failed to query " + CollectTable
 			logging.LogIt("existHandler", "ERROR", "database not found. please check your database server")
 			pidQuery, pidCheck := db.Query("SELECT pg_backend_pid();")
 			if pidCheck != nil {
@@ -263,7 +193,7 @@ func (collectedData *CollectionData) InsertCollectedData() error {
 	query := `
 INSERT INTO collect_table (frontend, backend, ip, port, path, method, xforwardfor, xrealip, useragent, via, age, timedate, cfipcountry)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`
-	_, dbCheck := db.Exec(query,
+	_, dbCheck := Db.Exec(query,
 		collectedData.FrontendName,
 		Backend,
 		collectedData.IP,
@@ -285,8 +215,8 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`
 }
 
 func (bannedData *BannedData) BannedCheck(ipAddress string) error {
-	query := "SELECT * FROM " + bannedTable + " WHERE ip='$1';"
-	bannedRows, dbCheck := db.Query(query, ipAddress)
+	query := "SELECT * FROM " + BannedTable + " WHERE ip='$1';"
+	bannedRows, dbCheck := Db.Query(query, ipAddress)
 	if dbCheck != nil {
 		logging.LogIt("bannedCheck", "ERROR", "unable to query db")
 	}
@@ -314,7 +244,7 @@ func (bannedData *BannedData) BannedCheck(ipAddress string) error {
 
 func (collectedData *CollectionData) FetchAll() error {
 	query := "select * from collect_data;"
-	rows, dbCheck := db.Query(query)
+	rows, dbCheck := Db.Query(query)
 	if dbCheck != nil {
 		logging.LogIt("bannedCheck", "ERROR", "unable to query db")
 	}

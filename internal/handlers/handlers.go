@@ -5,24 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"poniatowski-dev-backend/internal/helper"
-	"poniatowski-dev-backend/internal/internaldb"
-	"poniatowski-dev-backend/internal/logging"
-)
+	"zehd-backend/internal/helper"
+	"zehd-backend/internal/internaldb"
+	"zehd-backend/internal/logging"
 
-const (
-	GET  = "GET"
-	POST = "POST"
-	// PUT    = "PUT"
-	// DELETE = "DELETE"
-	// PATCH = "PATCH"
+	. "zehd-backend/internal"
 )
-
-type databaseExists struct {
-	Frontend   string `json:"frontend"`
-	Connection string `json:"connection"`
-	Tables     string `json:"tables"`
-}
 
 func ExistHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/database/exist" {
@@ -50,7 +38,7 @@ func ExistHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case POST:
 		if r.Header.Get("Content-Type") == "application/json" {
-			var dbExists databaseExists
+			var dbExists DatabaseExists
 			errJson := json.NewDecoder(r.Body).Decode(&dbExists)
 			if errJson != nil {
 				helper.ErrorResponse(w, "Bad Request: Wrong Content-Type provided", http.StatusBadRequest)
@@ -102,7 +90,7 @@ func CollectHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var unmarshalErr *json.UnmarshalTypeError
 		decoder := json.NewDecoder(r.Body)
-		//decoder.DisallowUnknownFields()
+		// decoder.DisallowUnknownFields()
 		err := decoder.Decode(&collectionData)
 		if err != nil {
 			if errors.As(err, &unmarshalErr) {
