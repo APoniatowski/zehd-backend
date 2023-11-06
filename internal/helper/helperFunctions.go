@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// ErrorResponse Boilerplate error response
 func ErrorResponse(w http.ResponseWriter, message string, httpStatusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatusCode)

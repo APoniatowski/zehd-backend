@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestLogIt Logit testing, to check if logs will be written/printed
 func TestLogIt(t *testing.T) {
 	logFunction := "TestFunction"
 	logOutput := "TestOutput"

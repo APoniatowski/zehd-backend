@@ -12,6 +12,7 @@ import (
 	. "zehd-backend/internal"
 )
 
+// ExistHandler Endpoint for checking if the DB exists. It take both GET and POST methods. GET to check availability and POST to initialize the DB
 func ExistHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/database/exist" {
 		http.Error(w, "404 not found.", http.StatusNotFound)
@@ -72,6 +73,7 @@ func ExistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CollectHandler Endpoint for collecting data from frontends via POST methods
 func CollectHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/collect" {
 		http.Error(w, "404 not found.", http.StatusNotFound)
@@ -114,6 +116,7 @@ func CollectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// BannedHandler Endpoint to check the DB for banned IP's
 func BannedHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/banned" {
 		http.Error(w, "404 not found.", http.StatusNotFound)
@@ -155,6 +158,7 @@ func BannedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FetchAllCollectedHandler Endpoint to fetch  all collected data
 func FetchAllCollectedHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/fetchall" {
 		http.Error(w, "404 not found.", http.StatusNotFound)

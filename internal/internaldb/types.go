@@ -1,5 +1,6 @@
 package internaldb
 
+// CollectionData Struct for collected data from frontends
 type CollectionData struct {
 	FrontendName string `json:"frontendName"`
 	TimeDate     int64  `json:"timeDate"`
@@ -15,6 +16,7 @@ type CollectionData struct {
 	CFIPCountry  string `json:"CF-IPCountry"`
 }
 
+// BannedData Struct to send banned data to frontends requesting it
 type BannedData struct {
 	FrontendName    string `json:"frontendName"`
 	TimeDateBanned  int64  `json:"timeDateBanned"`

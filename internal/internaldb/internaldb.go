@@ -6,6 +6,7 @@ import (
 	"os"
 	"zehd-backend/internal/logging"
 	"strconv"
+	"time"
 
 	. "zehd-backend/internal"
 
@@ -17,6 +18,7 @@ import (
 
 // dbConfig this function is run within the initDB function, in order to connect, check, or create DB and table
 func dbConfig() (map[string]string, error) {
+	defer logging.TrackTime("dbConfig", time.Now())
 	errEnv := godotenv.Load("/usr/local/env/.env")
 	if errEnv != nil {
 		logging.LogIt("dbConfig", "ERROR", "error loading .env variables")
@@ -65,7 +67,9 @@ func dbConfig() (map[string]string, error) {
 	return conf, nil
 }
 
+// InitDB Initialize the DB
 func InitDB() (string, error) {
+	defer logging.TrackTime("InitDB", time.Now())
 	var hostnameErr, err error
 	Backend, hostnameErr = os.Hostname()
 	if hostnameErr != nil {
@@ -126,7 +130,9 @@ func InitDB() (string, error) {
 	return "exists", nil
 }
 
+// CheckDB Check if the DB exists
 func CheckDB() (processNotFound string) {
+	defer logging.TrackTime("CheckDB", time.Now())
 	if DbHost == "localhost" {
 		processList, err := ps.Processes()
 		if err != nil {
@@ -189,7 +195,9 @@ func CheckDB() (processNotFound string) {
 	return processNotFound
 }
 
+// InsertCollectedData Insert the collected data from frontends into the DB
 func (collectedData *CollectionData) InsertCollectedData() error {
+	defer logging.TrackTime("InsertCollectedData", time.Now())
 	query := `
 INSERT INTO collect_table (frontend, backend, ip, port, path, method, xforwardfor, xrealip, useragent, via, age, timedate, cfipcountry)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`
@@ -214,7 +222,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`
 	return nil
 }
 
+// BannedCheck Check the DB for the banned IP
 func (bannedData *BannedData) BannedCheck(ipAddress string) error {
+	defer logging.TrackTime("BannedCheck", time.Now())
 	query := "SELECT * FROM " + BannedTable + " WHERE ip='$1';"
 	bannedRows, dbCheck := Db.Query(query, ipAddress)
 	if dbCheck != nil {
@@ -242,7 +252,9 @@ func (bannedData *BannedData) BannedCheck(ipAddress string) error {
 	return nil
 }
 
+// FetchAll Fetch all collected data
 func (collectedData *CollectionData) FetchAll() error {
+	defer logging.TrackTime("FetchAll", time.Now())
 	query := "select * from collect_data;"
 	rows, dbCheck := Db.Query(query)
 	if dbCheck != nil {
